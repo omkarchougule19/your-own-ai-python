@@ -1,13 +1,11 @@
-# VectorDB — Python Edition
+# VectorDB — Build a Vector Database from Scratch in Python
 
 A fully working **vector database built from scratch in Python**, with a web UI.
 Implements **HNSW**, **KD-Tree**, and **Brute Force** k-NN search in pure Python,
 plus a **RAG pipeline** powered by a local LLM via Ollama.
 
-> Ported from the original C++ project as an educational reference.
-> The goal is to show how production vector databases like Pinecone, Weaviate,
-> and Chroma actually work under the hood — in a language that's easier to read
-> and modify.
+> Built as an educational project to show how production vector databases like
+> Pinecone, Weaviate, and Chroma actually work under the hood.
 
 ---
 
@@ -53,6 +51,15 @@ achieving O(log N) complexity instead of O(N) for brute force.
 
 ---
 
+## Prerequisites
+
+You need **2 things**:
+
+1. **Python 3.10+**
+2. **Ollama** — runs the local AI models *(optional, only needed for document RAG)*
+
+---
+
 ## Quick Start
 
 ### 1 — Clone and install dependencies
@@ -63,16 +70,16 @@ cd your-own-ai-python
 pip install -r requirements.txt
 ```
 
-### 2 — (Optional) Install Ollama for document RAG
+### 2 — (Optional) Set up Ollama
 
-The demo vector database works without Ollama. You only need it if you want to
-insert real documents and ask questions about them.
+The demo vector database works out of the box. You only need Ollama if you want
+to insert real documents and ask questions about them.
 
 ```bash
 # Download from https://ollama.com, then:
 ollama pull nomic-embed-text
 ollama pull llama3.2
-ollama serve          # runs on localhost:11434
+ollama serve          # starts the local API on localhost:11434
 ```
 
 ### 3 — Start the server
@@ -160,8 +167,8 @@ precise local search. Insert and query are both O(log N) on average.
 ### Thread safety
 
 Every public method on `VectorDB` and `DocumentDB` holds a `threading.Lock`
-for the duration of the operation, matching the `std::mutex` in the original
-C++ code. FastAPI runs handlers in a thread pool, so this matters.
+for the duration of the operation. FastAPI runs handlers in a thread pool,
+so concurrent requests are safe.
 
 ### Ollama integration
 
@@ -173,24 +180,6 @@ C++ code. FastAPI runs handlers in a thread pool, so this matters.
 Both calls use `requests` with explicit timeouts (30 s for embeddings, 180 s
 for generation). If Ollama is not running, embedding calls return `[]` and
 the server responds with a `503`.
-
----
-
-## Differences from the C++ Version
-
-| Aspect | C++ | Python |
-|--------|-----|--------|
-| HTTP server | `httplib.h` (single-header) | FastAPI + Uvicorn |
-| JSON | Hand-rolled serialiser | Pydantic + FastAPI auto-serialisation |
-| Concurrency | `std::mutex` | `threading.Lock` |
-| Ollama HTTP | `httplib::Client` | `requests` |
-| Build step | `g++ main.cpp -o server` | None — `python main.py` |
-| Performance | Faster (compiled, stack-allocated) | Slower (interpreted, heap-allocated) |
-
-The algorithmic logic — HNSW level sampling, KD-Tree splitting, neighbour
-pruning, and the search layer traversal — is a direct translation. The same
-random seed (42) is used so HNSW graph structure is deterministic across both
-versions.
 
 ---
 
